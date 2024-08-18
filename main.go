@@ -86,7 +86,7 @@ func main() {
 			log.Fatal().Err(err).Msg("Failed to start HTTP server")
 		}
 	}()
-	log.Info().Int("port", port).Msg("Started exporter")
+	log.Info().Int("port", port).Msg("Started controller")
 
 	<-done
 	log.Info().Msg("Stopping")
