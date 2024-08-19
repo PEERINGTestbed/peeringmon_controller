@@ -11,10 +11,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	api "github.com/osrg/gobgp/v3/api"
 	"github.com/osrg/gobgp/v3/pkg/server"
@@ -23,6 +22,8 @@ import (
 var debug bool
 var jsonLog bool
 var port int
+var configPath string
+var cycleInterval int
 
 func init() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
@@ -30,6 +31,8 @@ func init() {
 	flag.IntVar(&port, "port", 2113, "port")
 	flag.BoolVar(&debug, "debug", false, "debug")
 	flag.BoolVar(&jsonLog, "json", false, "json logging")
+	flag.StringVar(&configPath, "config", "config.toml", "config file")
+	flag.IntVar(&cycleInterval, "i", 10, "cycle interval")
 }
 
 func main() {
@@ -44,6 +47,11 @@ func main() {
 		log.Debug().Msg("Debug log enabled")
 	} else {
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
+
+	if err := loadConfig(); err != nil {
+		log.Fatal().Err(err).Msg("error loading config")
+		return
 	}
 
 	s := server.NewBgpServer()
@@ -63,14 +71,7 @@ func main() {
 	log.Info().
 		Msg("Starting PEERINGMON Controller")
 
-	go func() {
-		ticker := time.NewTicker(1 * time.Minute)
-		defer ticker.Stop()
-
-		for range ticker.C {
-			//updateStates()
-		}
-	}()
+	initPrefixes()
 
 	http.Handle("/metrics", promhttp.Handler())
 
@@ -86,7 +87,20 @@ func main() {
 			log.Fatal().Err(err).Msg("Failed to start HTTP server")
 		}
 	}()
-	log.Info().Int("port", port).Msg("Started controller")
+	log.Info().
+		Int("port", port).
+		Int("cycle_interval", cycleInterval).
+		Msg("Started controller")
+
+	cycle()
+	go func() {
+		ticker := time.NewTicker(time.Duration(cycleInterval) * time.Second)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			cycle()
+		}
+	}()
 
 	<-done
 	log.Info().Msg("Stopping")
