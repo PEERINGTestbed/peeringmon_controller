@@ -21,7 +21,7 @@ func initPrefixes() {
 
 func (p *Prefix) update(site string) {
 	// set prom entry
-	log.Info().
+	log.Debug().
 		Str("site", site).
 		Str("prefix", p.prefix).
 		Msg("updating prom entry")
@@ -60,6 +60,5 @@ func nextSite() string {
 			return Config.Sites[i+1]
 		}
 	}
-	panic("")
-	return ""
+	panic("unreachable, maybe Config.Sites empty")
 }

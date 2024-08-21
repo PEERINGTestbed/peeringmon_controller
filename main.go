@@ -95,6 +95,7 @@ func main() {
 	cycle()
 	go func() {
 		ticker := time.NewTicker(time.Duration(cycleInterval) * time.Second)
+		//TODO: This should be set to Minute later.
 		defer ticker.Stop()
 
 		for range ticker.C {
