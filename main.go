@@ -25,6 +25,8 @@ var port int
 var configPath string
 var cycleInterval int
 
+var s *server.BgpServer
+
 func init() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
@@ -54,7 +56,7 @@ func main() {
 		return
 	}
 
-	s := server.NewBgpServer()
+	s = server.NewBgpServer()
 	go s.Serve()
 
 	// global configuration
