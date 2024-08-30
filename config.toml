@@ -1,2 +1,17 @@
-prefixes = [ "184.164.250.0/24", "184.164.251.0/24" ]
-sites = [ "newyork", "paris", "seattle" ]
+asn = 47065
+router_id = "10.0.0.1"
+listen_port = 1709
+
+prefixes = [ 
+{ prefix = "184.164.250.0/24", asn = 47065 },
+{ prefix = "184.164.251.0/24", asn = 47065 },
+]
+
+sites = [
+{ name = "vtrchicago", neighbor = "100.94.128.1", asn = 47065 },
+{ name = "vtrlondon", neighbor = "100.108.128.1", asn = 47065 },
+{ name = "vtrnewyork", neighbor = "100.98.128.9", asn = 47065 },
+{ name = "vtrosaka", neighbor = "100.114.128.1", asn = 47065 },
+{ name = "vtrseattle", neighbor = "100.93.128.1", asn = 47065 },
+{ name = "vtrsydney", neighbor = "100.91.128.1", asn = 47065 },
+]

@@ -14,9 +14,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-
-	api "github.com/osrg/gobgp/v3/api"
-	"github.com/osrg/gobgp/v3/pkg/server"
 )
 
 var debug bool
@@ -25,7 +22,7 @@ var port int
 var configPath string
 var cycleInterval int
 
-var s *server.BgpServer
+var prefixes []*Prefix
 
 func init() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
@@ -56,24 +53,12 @@ func main() {
 		return
 	}
 
-	s = server.NewBgpServer()
-	go s.Serve()
-
-	// global configuration
-	if err := s.StartBgp(context.Background(), &api.StartBgpRequest{
-		Global: &api.Global{
-			Asn:        65003,
-			RouterId:   "10.0.255.254",
-			ListenPort: 179,
-		},
-	}); err != nil {
-		log.Fatal().Err(err)
-	}
+	bgpInit()
 
 	log.Info().
 		Msg("Starting PEERINGMON Controller")
 
-	initPrefixes()
+	prefixes = prefixesInit()
 
 	http.Handle("/metrics", promhttp.Handler())
 
