@@ -1,6 +1,9 @@
 asn = 47065
 router_id = "10.0.0.1"
 listen_port = 1709
+listen_addr = [
+"0.0.0.0",
+]
 
 prefixes = [ 
 { prefix = "184.164.250.0/24", asn = 47065 },

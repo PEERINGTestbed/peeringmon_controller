@@ -95,8 +95,11 @@ func main() {
 	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownRelease()
 
+	if err := bgpStop(shutdownCtx); err != nil {
+		log.Fatal().Err(err).Msg("Failed to gracefully stop bgp instance")
+	}
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Fatal().Err(err).Msg("Failed to gracefully stop server")
+		log.Fatal().Err(err).Msg("Failed to gracefully stop http server")
 	}
 	log.Info().Msg("Graceful Shutdown Successful, bye")
 }

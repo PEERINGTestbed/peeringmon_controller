@@ -10,6 +10,7 @@ import (
 	"github.com/osrg/gobgp/v3/pkg/server"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/types/known/anypb"
 	apb "google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -29,10 +30,10 @@ func bgpInit() {
 
 	if err := s.StartBgp(ctx, &api.StartBgpRequest{
 		Global: &api.Global{
-			Asn:        Config.ASN,
-			RouterId:   Config.RouterID,
-			ListenPort: Config.ListenPort,
-			//TODO: ListenAddresses
+			Asn:             Config.ASN,
+			RouterId:        Config.RouterID,
+			ListenPort:      Config.ListenPort,
+			ListenAddresses: Config.ListenAddr,
 		},
 	}); err != nil {
 		log.Fatal().Err(err).Msg("Failed to start BGP server")
@@ -49,11 +50,14 @@ func bgpInit() {
 	}
 }
 
+func bgpStop(ctx context.Context) error {
+	return s.StopBgp(ctx, &api.StopBgpRequest{})
+}
+
 func prefixesInit() (prefixes []*Prefix) {
 	for i := range Config.Prefixes {
 		configPrefix := Config.Prefixes[i]
 		cidr := configPrefix.Prefix
-		asn := uint32(configPrefix.ASN)
 
 		cidrSplit := strings.Split(cidr, "/")
 		prefix := cidrSplit[0]
@@ -72,24 +76,15 @@ func prefixesInit() (prefixes []*Prefix) {
 		})
 
 		a1, _ := apb.New(&api.OriginAttribute{
-			Origin: asn,
+			Origin: 0,
 		})
 		a2, _ := apb.New(&api.NextHopAttribute{
-			//TODO: i don't think we care about this atm
 			NextHop: "0.0.0.0",
 		})
-		a3, _ := apb.New(&api.AsPathAttribute{
-			Segments: []*api.AsSegment{
-				{
-					Type:    api.AsSegment_AS_SEQUENCE,
-					Numbers: []uint32{asn},
-				},
-			},
-		})
-		attrs := []*apb.Any{a1, a2, a3}
+		attrs := []*apb.Any{a1, a2}
 
 		newPrefix := Prefix{
-			prefix: cidr,
+			prefix: prefix,
 			pathObj: &api.Path{
 				Family: &api.Family{Afi: api.Family_AFI_IP, Safi: api.Family_SAFI_UNICAST},
 				Nlri:   nlri,
@@ -108,11 +103,40 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 		Str("site", site.Name).
 		Str("prefix", p.prefix).
 		Msg("Announcing")
+
+	rd, _ := apb.New(&api.RouteDistinguisherFourOctetASN{
+		Admin:    65000,
+		Assigned: 100,
+	})
+
+	a, err := apb.New(&api.IPv4AddressSpecificExtended{
+		IsTransitive: true,
+		SubType:      0x02,
+		Address:      p.prefix,
+		LocalAdmin:   100,
+	})
+
+	if err := s.AddVrf(ctx, &api.AddVrfRequest{
+		//TODO: figure out how to remove this later
+		Vrf: &api.Vrf{
+			Name:     site.Name,
+			Rd:       rd,
+			ExportRt: []*anypb.Any{a},
+			ImportRt: []*anypb.Any{a},
+		}}); err != nil {
+		log.Error().Err(err).
+			Str("site", site.Name).
+			Str("prefix", p.prefix).
+			Msg("AddVrf")
+	}
+
 	n := &api.Peer{
 		Conf: &api.PeerConf{
 			NeighborAddress: site.Neighbor,
 			//TODO: Assuming peerASN is our ASN
-			PeerAsn: uint32(site.ASN),
+			PeerAsn:     uint32(site.ASN),
+			AllowOwnAsn: uint32(site.ASN),
+			Vrf:         site.Name,
 		},
 	}
 
@@ -127,7 +151,9 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 	}
 
 	resp, err := s.AddPath(ctx, &api.AddPathRequest{
-		Path: p.pathObj,
+		Path:      p.pathObj,
+		VrfId:     site.Name,
+		TableType: api.TableType_VRF,
 	})
 	if err != nil {
 		log.Error().Err(err).
@@ -151,7 +177,8 @@ func (p *Prefix) bgpWithdraw() {
 
 	// make withdraw
 	if err := s.DeletePath(ctx, &api.DeletePathRequest{
-		Path: p.pathObj,
+		Path:  p.pathObj,
+		VrfId: p.lastAdvSite.Name,
 	}); err != nil {
 		log.Error().Err(err).
 			Str("neighbor", p.lastAdvSite.Name).

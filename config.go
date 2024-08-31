@@ -30,6 +30,7 @@ var (
 		ASN        uint32          `koanf:"asn"`
 		RouterID   string          `koanf:"router_id"`
 		ListenPort int32           `koanf:"listen_port"`
+		ListenAddr []string        `koanf:"listen_addr"`
 		Prefixes   []*ConfigPrefix `koanf:"prefixes"`
 		Sites      []*ConfigSite   `koanf:"sites"`
 	}
