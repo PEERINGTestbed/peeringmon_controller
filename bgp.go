@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -201,6 +202,14 @@ func (p *Prefix) bgpWithdraw() {
 			Str("prefix", p.prefix).
 			Msg("DeletePeer")
 	}
+	if err := s.DeleteVrf(ctx, &api.DeleteVrfRequest{
+		Name: p.lastAdvSite.Name,
+	}); err != nil {
+		log.Error().Err(err).
+			Str("neighbor", p.lastAdvSite.Name).
+			Str("prefix", p.prefix).
+			Msg("DeleteVrf")
+	}
 	return
 }
 
@@ -208,28 +217,36 @@ type myLogger struct {
 	logger *zerolog.Logger
 }
 
+func (l *myLogger) log(level zerolog.Level, msg string, fields bgpLog.Fields) {
+	event := l.logger.WithLevel(level).Str("src", "gobgp.server")
+	for key, value := range fields {
+		event = event.Str(key, fmt.Sprint(value))
+	}
+	event.Msg(msg)
+}
+
 func (l *myLogger) Panic(msg string, fields bgpLog.Fields) {
-	l.logger.Panic().Str("src", "gobgp.server").Fields(fields).Msg(msg)
+	l.log(zerolog.PanicLevel, msg, fields)
 }
 
 func (l *myLogger) Fatal(msg string, fields bgpLog.Fields) {
-	l.logger.Fatal().Str("src", "gobgp.server").Fields(fields).Msg(msg)
+	l.log(zerolog.FatalLevel, msg, fields)
 }
 
 func (l *myLogger) Error(msg string, fields bgpLog.Fields) {
-	l.logger.Error().Str("src", "gobgp.server").Fields(fields).Msg(msg)
+	l.log(zerolog.ErrorLevel, msg, fields)
 }
 
 func (l *myLogger) Warn(msg string, fields bgpLog.Fields) {
-	l.logger.Warn().Str("src", "gobgp.server").Fields(fields).Msg(msg)
+	l.log(zerolog.WarnLevel, msg, fields)
 }
 
 func (l *myLogger) Info(msg string, fields bgpLog.Fields) {
-	l.logger.Info().Str("src", "gobgp.server").Fields(fields).Msg(msg)
+	l.log(zerolog.InfoLevel, msg, fields)
 }
 
 func (l *myLogger) Debug(msg string, fields bgpLog.Fields) {
-	l.logger.Debug().Str("src", "gobgp.server").Fields(fields).Msg(msg)
+	l.log(zerolog.DebugLevel, msg, fields)
 }
 
 func (l *myLogger) SetLevel(level bgpLog.LogLevel) {
