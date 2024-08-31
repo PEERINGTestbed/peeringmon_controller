@@ -18,7 +18,6 @@ import (
 type Prefix struct {
 	prefix      string
 	pathObj     *api.Path
-	lastAdvUuid []byte
 	lastAdvSite *ConfigSite
 }
 
@@ -91,7 +90,6 @@ func prefixesInit() (prefixes []*Prefix) {
 				Nlri:   nlri,
 				Pattrs: attrs,
 			},
-			lastAdvUuid: nil,
 			lastAdvSite: nil,
 		}
 		prefixes = append(prefixes, &newPrefix)
@@ -110,7 +108,7 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 		Assigned: 100,
 	})
 
-	a, err := apb.New(&api.IPv4AddressSpecificExtended{
+	a, _ := apb.New(&api.IPv4AddressSpecificExtended{
 		IsTransitive: true,
 		SubType:      0x02,
 		Address:      p.prefix,
@@ -148,12 +146,11 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 		return
 	}
 
-	resp, err := s.AddPath(ctx, &api.AddPathRequest{
+	if _, err := s.AddPath(ctx, &api.AddPathRequest{
 		Path:      p.pathObj,
 		VrfId:     site.Name,
 		TableType: api.TableType_VRF,
-	})
-	if err != nil {
+	}); err != nil {
 		log.Error().Err(err).
 			Str("site", site.Name).
 			Str("prefix", p.prefix).
@@ -161,9 +158,7 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 		return
 	}
 
-	p.lastAdvUuid = resp.Uuid
 	p.lastAdvSite = site
-
 	return
 }
 
