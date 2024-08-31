@@ -118,7 +118,6 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 	})
 
 	if err := s.AddVrf(ctx, &api.AddVrfRequest{
-		//TODO: figure out how to remove this later
 		Vrf: &api.Vrf{
 			Name:     site.Name,
 			Rd:       rd,
@@ -134,10 +133,8 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 	n := &api.Peer{
 		Conf: &api.PeerConf{
 			NeighborAddress: site.Neighbor,
-			//TODO: Assuming peerASN is our ASN
-			PeerAsn:     uint32(site.ASN),
-			AllowOwnAsn: uint32(site.ASN),
-			Vrf:         site.Name,
+			PeerAsn:         uint32(site.ASN),
+			Vrf:             site.Name,
 		},
 	}
 
