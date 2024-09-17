@@ -75,20 +75,11 @@ func prefixesInit() (prefixes []*Prefix) {
 			PrefixLen: uint32(prefixLen),
 		})
 
-		a1, _ := apb.New(&api.OriginAttribute{
-			Origin: 0,
-		})
-		a2, _ := apb.New(&api.NextHopAttribute{
-			NextHop: "0.0.0.0",
-		})
-		attrs := []*apb.Any{a1, a2}
-
 		newPrefix := Prefix{
 			prefix: prefix,
 			pathObj: &api.Path{
 				Family: &api.Family{Afi: api.Family_AFI_IP, Safi: api.Family_SAFI_UNICAST},
 				Nlri:   nlri,
-				Pattrs: attrs,
 			},
 			lastAdvSite: nil,
 		}
@@ -145,6 +136,26 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 			Msg("AddPeer")
 		return
 	}
+
+	a1, _ := apb.New(&api.OriginAttribute{
+		Origin: 0,
+	})
+	a2, _ := apb.New(&api.NextHopAttribute{
+		NextHop: "0.0.0.0",
+	})
+
+	adminSet := Config.ASN
+	if Config.ASN > 65535 {
+		adminSet = 65535
+	}
+
+	comm := (adminSet << uint32(16)) | uint32(site.Id)
+
+	c, _ := apb.New(&api.CommunitiesAttribute{
+		Communities: []uint32{comm},
+	})
+
+	p.pathObj.Pattrs = []*apb.Any{a1, a2, c}
 
 	if _, err := s.AddPath(ctx, &api.AddPathRequest{
 		Path:      p.pathObj,

@@ -17,6 +17,7 @@ type ConfigPrefix struct {
 	ASN    int    `koanf:"asn"`
 }
 type ConfigSite struct {
+	Id       int    `koanf:"id"`
 	Name     string `koanf:"name"`
 	Neighbor string `koanf:"neighbor"`
 	ASN      int    `konaf:"asn"`
