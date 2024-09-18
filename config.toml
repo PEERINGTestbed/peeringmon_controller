@@ -12,8 +12,6 @@ sites = [
 { id = 5, name = "amsterdam01", neighbor = "100.69.128.1", asn = 47065 },
 { id = 16, name = "clemson01", neighbor = "100.80.128.1", asn = 47065 },
 { id = 6, name = "gatech01", neighbor = "100.70.128.1", asn = 47065 },
-]
-h = [
 { id = 9, name = "grnet01", neighbor = "100.73.128.1", asn = 47065 },
 { id = 2, name = "isi01", neighbor = "100.66.128.1", asn = 47065 },
 { id = 14, name = "neu01", neighbor = "100.78.128.1", asn = 47065 },
