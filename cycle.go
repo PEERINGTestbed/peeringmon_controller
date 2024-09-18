@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -11,7 +13,7 @@ var (
 	routesGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "current_announcements",
 		Help: "current announcements",
-	}, []string{"prefix", "site"})
+	}, []string{"prefix", "site", "id"})
 )
 
 func (p *Prefix) update(site *ConfigSite) {
@@ -19,6 +21,7 @@ func (p *Prefix) update(site *ConfigSite) {
 		routesGauge.WithLabelValues(
 			p.prefix,
 			p.lastAdvSite.Name,
+			strconv.Itoa(p.lastAdvSite.Id),
 		).Set(0)
 		p.bgpWithdraw()
 	}
@@ -27,6 +30,7 @@ func (p *Prefix) update(site *ConfigSite) {
 	routesGauge.WithLabelValues(
 		p.prefix,
 		p.lastAdvSite.Name,
+		strconv.Itoa(p.lastAdvSite.Id),
 	).Set(1)
 
 	return
