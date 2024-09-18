@@ -19,6 +19,7 @@ type Prefix struct {
 	prefix      string
 	pathObj     *api.Path
 	lastAdvSite *ConfigSite
+	vrfName     string
 }
 
 var ctx = context.Background()
@@ -75,14 +76,42 @@ func prefixesInit() (prefixes []*Prefix) {
 			PrefixLen: uint32(prefixLen),
 		})
 
+		rd, _ := apb.New(&api.RouteDistinguisherFourOctetASN{
+			Admin:    65000,
+			Assigned: 100,
+		})
+
+		a, _ := apb.New(&api.IPv4AddressSpecificExtended{
+			IsTransitive: true,
+			SubType:      0x02,
+			Address:      prefix,
+			LocalAdmin:   100,
+		})
+
+		vrfName := strconv.Itoa(configPrefix.Id)
+
+		if err := s.AddVrf(ctx, &api.AddVrfRequest{
+			Vrf: &api.Vrf{
+				Name:     vrfName,
+				Rd:       rd,
+				ExportRt: []*anypb.Any{a},
+				ImportRt: []*anypb.Any{a},
+			}}); err != nil {
+			log.Error().Err(err).
+				Str("prefix", prefix).
+				Msg("AddVrf")
+		}
+
 		newPrefix := Prefix{
-			prefix: prefix,
+			prefix:  prefix,
+			vrfName: vrfName,
 			pathObj: &api.Path{
 				Family: &api.Family{Afi: api.Family_AFI_IP, Safi: api.Family_SAFI_UNICAST},
 				Nlri:   nlri,
 			},
 			lastAdvSite: nil,
 		}
+
 		prefixes = append(prefixes, &newPrefix)
 	}
 	return
@@ -94,36 +123,11 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 		Str("prefix", p.prefix).
 		Msg("Announcing")
 
-	rd, _ := apb.New(&api.RouteDistinguisherFourOctetASN{
-		Admin:    65000,
-		Assigned: 100,
-	})
-
-	a, _ := apb.New(&api.IPv4AddressSpecificExtended{
-		IsTransitive: true,
-		SubType:      0x02,
-		Address:      p.prefix,
-		LocalAdmin:   100,
-	})
-
-	if err := s.AddVrf(ctx, &api.AddVrfRequest{
-		Vrf: &api.Vrf{
-			Name:     site.Name,
-			Rd:       rd,
-			ExportRt: []*anypb.Any{a},
-			ImportRt: []*anypb.Any{a},
-		}}); err != nil {
-		log.Error().Err(err).
-			Str("site", site.Name).
-			Str("prefix", p.prefix).
-			Msg("AddVrf")
-	}
-
 	n := &api.Peer{
 		Conf: &api.PeerConf{
 			NeighborAddress: site.Neighbor,
 			PeerAsn:         uint32(site.ASN),
-			Vrf:             site.Name,
+			Vrf:             p.vrfName,
 		},
 	}
 
@@ -159,7 +163,7 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 
 	if _, err := s.AddPath(ctx, &api.AddPathRequest{
 		Path:      p.pathObj,
-		VrfId:     site.Name,
+		VrfId:     p.vrfName,
 		TableType: api.TableType_VRF,
 	}); err != nil {
 		log.Error().Err(err).
@@ -182,7 +186,7 @@ func (p *Prefix) bgpWithdraw() {
 	// make withdraw
 	if err := s.DeletePath(ctx, &api.DeletePathRequest{
 		Path:  p.pathObj,
-		VrfId: p.lastAdvSite.Name,
+		VrfId: p.vrfName,
 	}); err != nil {
 		log.Error().Err(err).
 			Str("neighbor", p.lastAdvSite.Name).
@@ -204,14 +208,6 @@ func (p *Prefix) bgpWithdraw() {
 			Str("neighbor", p.lastAdvSite.Name).
 			Str("prefix", p.prefix).
 			Msg("DeletePeer")
-	}
-	if err := s.DeleteVrf(ctx, &api.DeleteVrfRequest{
-		Name: p.lastAdvSite.Name,
-	}); err != nil {
-		log.Error().Err(err).
-			Str("neighbor", p.lastAdvSite.Name).
-			Str("prefix", p.prefix).
-			Msg("DeleteVrf")
 	}
 	return
 }

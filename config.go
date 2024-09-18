@@ -13,6 +13,7 @@ import (
 )
 
 type ConfigPrefix struct {
+	Id     int    `koanf:"id"`
 	Prefix string `koanf:"prefix"`
 	ASN    int    `koanf:"asn"`
 }
