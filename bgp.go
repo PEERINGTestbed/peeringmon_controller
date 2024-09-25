@@ -123,12 +123,26 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 		Str("prefix", p.prefix).
 		Msg("Announcing")
 
+	// make bgp policy to reject all routes
+	policy := &api.ApplyPolicy{
+		InPolicy: &api.PolicyAssignment{
+			Name:          "reject",
+			DefaultAction: api.RouteAction_REJECT,
+		},
+	}
+
+	adminSet := Config.ASN
+	if Config.ASN > 65535 {
+		adminSet = 65535
+	}
+
 	n := &api.Peer{
 		Conf: &api.PeerConf{
 			NeighborAddress: site.Neighbor,
 			PeerAsn:         uint32(site.ASN),
 			Vrf:             p.vrfName,
 		},
+		ApplyPolicy: policy,
 	}
 
 	if err := s.AddPeer(ctx, &api.AddPeerRequest{
@@ -147,11 +161,6 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 	a2, _ := apb.New(&api.NextHopAttribute{
 		NextHop: "0.0.0.0",
 	})
-
-	adminSet := Config.ASN
-	if Config.ASN > 65535 {
-		adminSet = 65535
-	}
 
 	comm := (adminSet << uint32(16)) | uint32(site.Id)
 
