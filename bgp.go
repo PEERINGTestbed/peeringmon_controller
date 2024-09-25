@@ -40,6 +40,14 @@ func bgpInit() {
 		log.Fatal().Err(err).Msg("Failed to start BGP server")
 	}
 
+	s.SetPolicyAssignment(context.Background(), &api.SetPolicyAssignmentRequest{
+		Assignment: &api.PolicyAssignment{
+			Name:          "global",
+			Direction:     api.PolicyDirection_IMPORT,
+			DefaultAction: api.RouteAction_REJECT,
+		},
+	})
+
 	if err := s.WatchEvent(ctx, &api.WatchEventRequest{Peer: &api.WatchEventRequest_Peer{}}, func(r *api.WatchEventResponse) {
 		if p := r.GetPeer(); p != nil && p.Type == api.WatchEventResponse_PeerEvent_STATE {
 			log.Debug().
