@@ -101,6 +101,7 @@ func main() {
 			Safi: api.Family_SAFI_UNICAST,
 		}
 		for range ticker.C {
+			fmt.Println("called")
 			s.ListPath(context.Background(), &api.ListPathRequest{Family: v4Family}, func(p *api.Destination) {
 				fmt.Println(p)
 			})

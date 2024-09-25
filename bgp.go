@@ -40,14 +40,6 @@ func bgpInit() {
 		log.Fatal().Err(err).Msg("Failed to start BGP server")
 	}
 
-	s.SetPolicyAssignment(context.Background(), &api.SetPolicyAssignmentRequest{
-		Assignment: &api.PolicyAssignment{
-			Name:          "global",
-			Direction:     api.PolicyDirection_IMPORT,
-			DefaultAction: api.RouteAction_REJECT,
-		},
-	})
-
 	if err := s.WatchEvent(ctx, &api.WatchEventRequest{Peer: &api.WatchEventRequest_Peer{}}, func(r *api.WatchEventResponse) {
 		if p := r.GetPeer(); p != nil && p.Type == api.WatchEventResponse_PeerEvent_STATE {
 			log.Debug().
@@ -132,19 +124,6 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 		Msg("Announcing")
 
 	// make bgp policy to reject all routes
-	policy := &api.ApplyPolicy{
-		InPolicy: &api.PolicyAssignment{
-			Name:          "reject",
-			Direction:     api.PolicyDirection_IMPORT,
-			DefaultAction: api.RouteAction_REJECT,
-		},
-		ImportPolicy: &api.PolicyAssignment{
-			Name:          "reject",
-			Direction:     api.PolicyDirection_IMPORT,
-			DefaultAction: api.RouteAction_REJECT,
-		},
-	}
-
 	adminSet := Config.ASN
 	if Config.ASN > 65535 {
 		adminSet = 65535
@@ -156,7 +135,6 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 			PeerAsn:         uint32(site.ASN),
 			Vrf:             p.vrfName,
 		},
-		ApplyPolicy: policy,
 	}
 
 	if err := s.AddPeer(ctx, &api.AddPeerRequest{
