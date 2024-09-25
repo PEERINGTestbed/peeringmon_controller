@@ -102,7 +102,10 @@ func main() {
 		}
 		for range ticker.C {
 			fmt.Println("called")
-			s.ListPath(context.Background(), &api.ListPathRequest{Family: v4Family}, func(p *api.Destination) {
+			s.ListPath(context.Background(), &api.ListPathRequest{
+				Family:    v4Family,
+				TableType: api.TableType_VRF,
+			}, func(p *api.Destination) {
 				fmt.Println(p)
 			})
 		}

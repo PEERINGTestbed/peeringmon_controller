@@ -123,7 +123,6 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 		Str("prefix", p.prefix).
 		Msg("Announcing")
 
-	// make bgp policy to reject all routes
 	adminSet := Config.ASN
 	if Config.ASN > 65535 {
 		adminSet = 65535
