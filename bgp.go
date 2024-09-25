@@ -125,7 +125,7 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 
 	// make bgp policy to reject all routes
 	policy := &api.ApplyPolicy{
-		InPolicy: &api.PolicyAssignment{
+		ImportPolicy: &api.PolicyAssignment{
 			Name:          "reject",
 			DefaultAction: api.RouteAction_REJECT,
 		},
