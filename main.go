@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	api "github.com/osrg/gobgp/v3/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -86,6 +88,22 @@ func main() {
 
 		for range ticker.C {
 			cycle()
+		}
+	}()
+
+	go func() {
+		//debug purposes
+		ticker := time.NewTicker(time.Duration(30) * time.Second)
+		defer ticker.Stop()
+
+		v4Family := &api.Family{
+			Afi:  api.Family_AFI_IP,
+			Safi: api.Family_SAFI_UNICAST,
+		}
+		for range ticker.C {
+			s.ListPath(context.Background(), &api.ListPathRequest{Family: v4Family}, func(p *api.Destination) {
+				fmt.Println(p)
+			})
 		}
 	}()
 
