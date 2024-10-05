@@ -167,7 +167,7 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 		NextHop: "0.0.0.0",
 	})
 
-	comm := (adminSet << uint32(16)) | uint32(site.Id)
+	comm := (adminSet << uint32(16)) | uint32(2000+site.Id)
 
 	c, _ := apb.New(&api.CommunitiesAttribute{
 		Communities: []uint32{comm},
