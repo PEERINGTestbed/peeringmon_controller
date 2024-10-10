@@ -30,7 +30,7 @@ func (p *Prefix) update(site *ConfigSite) {
 	routesGauge.WithLabelValues(
 		p.prefix,
 		p.lastAdvSite.Name,
-		strconv.Itoa(p.lastAdvSite.Id),
+		strconv.Itoa(p.lastAdvSite.Id+2000),
 	).Set(1)
 
 	return
