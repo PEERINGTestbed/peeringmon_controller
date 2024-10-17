@@ -2,6 +2,7 @@ package main
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -25,6 +26,8 @@ func (p *Prefix) update(site *ConfigSite) {
 		).Set(0)
 		p.bgpWithdraw()
 	}
+
+	time.Sleep(30 * time.Minute)
 
 	p.bgpAnnounce(site)
 	routesGauge.WithLabelValues(
