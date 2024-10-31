@@ -187,6 +187,16 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 		return
 	}
 
+	if _, err := s.UpdatePeer(ctx, &api.UpdatePeerRequest{
+		Peer: n,
+	}); err != nil {
+		log.Error().Err(err).
+			Str("site", site.Name).
+			Str("prefix", p.prefix).
+			Msg("UpdatePeer")
+		return
+	}
+
 	p.lastAdvSite = site
 	return
 }
