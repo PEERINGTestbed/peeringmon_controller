@@ -18,11 +18,11 @@ var (
 
 func (p *Prefix) update(site *ConfigSite) {
 	if p.announcing {
-		routesGauge.WithLabelValues(
+		routesGauge.DeleteLabelValues(
 			p.prefix,
 			p.lastAdvSite.Name,
 			strconv.Itoa(p.lastAdvSite.Id+2000),
-		).Set(0)
+		)
 		p.bgpWithdraw()
 		return
 	}
