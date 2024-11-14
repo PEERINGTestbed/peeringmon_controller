@@ -81,6 +81,8 @@ func main() {
 
 	cycle()
 	go func() {
+		cycle()
+
 		ticker := time.NewTicker(time.Duration(cycleInterval) * time.Minute)
 		defer ticker.Stop()
 
