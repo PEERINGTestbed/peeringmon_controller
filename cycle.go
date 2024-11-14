@@ -2,7 +2,6 @@ package main
 
 import (
 	"strconv"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -18,16 +17,15 @@ var (
 )
 
 func (p *Prefix) update(site *ConfigSite) {
-	if p.lastAdvSite != nil {
+	if p.announcing {
 		routesGauge.WithLabelValues(
 			p.prefix,
 			p.lastAdvSite.Name,
 			strconv.Itoa(p.lastAdvSite.Id+2000),
 		).Set(0)
 		p.bgpWithdraw()
+		return
 	}
-
-	time.Sleep(30 * time.Minute)
 
 	p.bgpAnnounce(site)
 	routesGauge.WithLabelValues(

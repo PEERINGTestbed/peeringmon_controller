@@ -19,6 +19,7 @@ type Prefix struct {
 	prefix      string
 	pathObj     *api.Path
 	lastAdvSite *ConfigSite
+	announcing  bool
 	vrfName     string
 }
 
@@ -198,6 +199,7 @@ func (p *Prefix) bgpAnnounce(site *ConfigSite) {
 	}
 
 	p.lastAdvSite = site
+	p.announcing = true
 	return
 }
 
@@ -233,6 +235,7 @@ func (p *Prefix) bgpWithdraw() {
 			Str("prefix", p.prefix).
 			Msg("DeletePeer")
 	}
+	p.announcing = false
 	return
 }
 

@@ -70,17 +70,6 @@ func main() {
 	}
 
 	go func() {
-		if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			log.Fatal().Err(err).Msg("Failed to start HTTP server")
-		}
-	}()
-	log.Info().
-		Int("port", port).
-		Int("cycle_interval", cycleInterval).
-		Msg("Started controller")
-
-	cycle()
-	go func() {
 		cycle()
 
 		ticker := time.NewTicker(time.Duration(cycleInterval) * time.Minute)
@@ -90,6 +79,16 @@ func main() {
 			cycle()
 		}
 	}()
+
+	go func() {
+		if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal().Err(err).Msg("Failed to start HTTP server")
+		}
+	}()
+	log.Info().
+		Int("port", port).
+		Int("cycle_interval", cycleInterval).
+		Msg("Started controller")
 
 	<-done
 	log.Info().Msg("Stopping")
