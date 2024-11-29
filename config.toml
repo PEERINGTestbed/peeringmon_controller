@@ -15,7 +15,7 @@ sites = [
 { id = 9, name = "grnet01", neighbor = "100.73.128.1", asn = 47065 },
 { id = 2, name = "isi01", neighbor = "100.66.128.1", asn = 47065 },
 { id = 14, name = "neu01", neighbor = "100.78.128.1", asn = 47065 },
-{ id = 19, name = "saopaulo01", neighbor = "100.83.128.1", asn = 47065 },
+#{ id = 19, name = "saopaulo01", neighbor = "100.83.128.1", asn = 47065 },
 { id = 1, name = "seattle01", neighbor = "100.65.128.1", asn = 47065 },
 { id = 7, name = "ufmg01", neighbor = "100.71.128.1", asn = 47065 },
 { id = 17, name = "utah01", neighbor = "100.81.128.1", asn = 47065 },
