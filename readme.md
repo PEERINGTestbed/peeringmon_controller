@@ -9,3 +9,8 @@ to monitor bgp routes for the peering testbed.
 
 each announcement has the site's configured id value injected in the community
 to test for zombie routes
+
+### known issues
+Memory leaks: We suggest that if you wish to deploy this, you configure the
+peers to not export any routes to the controller as there is a memory leak.
+
